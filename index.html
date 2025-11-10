@@ -53,21 +53,20 @@ class PreloadScene extends Phaser.Scene {
     this.load.image('trash', 'basura1.png');
     this.load.image('trash_alt', 'basura2.png');
 
-   this.load.audio('collect', 'collect.wav'); 
+    // Corregido a .wav
+    this.load.audio('collect', 'collect.wav'); 
     this.load.audio('hit', 'hit.wav');         
     this.load.audio('gameOver', 'gameover.wav'); 
     this.load.audio('bgm', 'bgm.wav'); 
-    // NOTA: 'click' fue removido del preload.
   }
 
   create() {
     sfx = {
       collect: this.sound.add('collect', { volume: 0.5 }),
       hit: this.sound.add('hit', { volume: 0.6 }),
-      // click: this.sound.add('click', { volume: 0.7 }), // REMOVIDO
       gameOver: this.sound.add('gameOver', { volume: 0.7 })
     };
-
+    // Eliminada la referencia a 'click' de aquí
     bgm = this.sound.add('bgm', { loop: true, volume: 0.4 });
     
     this.sound.unlock();
@@ -123,7 +122,7 @@ class MainMenu extends Phaser.Scene {
     });
 
     startButton.on('pointerdown', () => {
-      // REMOVIDO: sfx.click.play(); 
+      // Eliminada la referencia a sfx.click.play(); 
 
       if (bgm && !bgm.isPlaying) {
         bgm.play();
@@ -133,7 +132,7 @@ class MainMenu extends Phaser.Scene {
       this.time.delayedCall(400, () => this.scene.start('GameScene'));
     });
 
-    // CÓDIGO DEL BOTÓN SALIR ELIMINADO SEGÚN LA SOLICITUD DEL USUARIO
+    // Código del botón SALIR eliminado.
   }
 }
 
@@ -286,13 +285,13 @@ class GameOver extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.createButton(config.width / 2, 360, 'REINTENTAR', 0xff6a00, () => {
-      // sfx.click.play(); // REMOVIDO
+      // Eliminada la referencia a sfx.click.play(); 
       this.scene.stop('GameOver');
       this.scene.start('GameScene');
     });
 
     this.createButton(config.width / 2, 440, 'MENÚ PRINCIPAL', 0xff00ff, () => {
-      // sfx.click.play(); // REMOVIDO
+      // Eliminada la referencia a sfx.click.play(); 
       this.scene.stop('GameOver');
       this.scene.stop('GameScene'); 
       this.scene.start('MainMenu');
@@ -315,19 +314,23 @@ class GameOver extends Phaser.Scene {
 }
 
 // ============================
-// CONFIGURACIÓN PHASER
+// CONFIGURACIÓN PHASER (CORREGIDA LA ESCALA)
 // ============================
 const config = {
   type: Phaser.AUTO,
   width: 480,
   height: 800,
   parent: 'game-container',
-  scale: { // Usamos 'scale' en lugar de 'pscale'
-    mode: Phaser.Scale.FIT, // Regresamos a FIT (o NONE si FIT falla)
+  scale: {
+    mode: Phaser.Scale.FIT, // Usamos FIT para que se ajuste, evitando el recorte
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 480,
     height: 800
   },
+  
+  physics: { default: 'arcade', arcade: { gravity: { y: 350 }, debug: false } },
+  scene: [PreloadScene, MainMenu, GameScene, GameOver]
+};
 
 new Phaser.Game(config);
 </script>
