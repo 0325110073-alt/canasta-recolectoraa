@@ -8,11 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" rel="stylesheet">
 
   <style>
-    /* CORRECCIÓN VH: Variable para la altura real de la ventana */
-    :root {
-      --vh: 1vh;
-    }
-
+    /* CSS simple sin correcciones VH, confiando en el navegador */
     body {
       margin: 0;
       padding: 0;
@@ -20,21 +16,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100%; 
+      height: 100vh; 
       font-family: 'Bangers', cursive;
       overflow: hidden;
     }
-    
-    #game-container {
-        /* CORRECCIÓN VH: Usamos la variable corregida para el alto */
-        height: calc(var(--vh, 1vh) * 100); 
-    }
 
     canvas {
-      /* Esto asegura que el canvas se ajusta al contenedor */
-      width: 100% !important; 
-      height: 100% !important; 
-
       border: 4px solid #ff6a00;
       box-shadow: 0 0 25px #ff00ff, 0 0 50px #ff6a00;
       border-radius: 12px;
@@ -45,15 +32,7 @@
 <div id="game-container"></div>
 
 <script>
-// CÓDIGO DE CORRECCIÓN VH: Calcula el alto real de la ventana en móviles
-function setViewportHeight() {
-  let vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
-}
-
-setViewportHeight();
-window.addEventListener('resize', setViewportHeight);
-// FIN CÓDIGO DE CORRECCIÓN
+// El código JavaScript de corrección VH ha sido eliminado.
     
 let score = 0;
 let lives = 3;
@@ -339,8 +318,9 @@ const config = {
   height: 800,
   parent: 'game-container',
   scale: {
-    // CAMBIO CRÍTICO: Usamos RESIZE para que Phaser se adapte al tamaño real del contenedor
-    mode: Phaser.Scale.RESIZE, 
+    // Retorno al modo FIT con centrado
+    mode: Phaser.Scale.FIT, 
+    autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 480,
     height: 800
   },
