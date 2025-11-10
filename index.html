@@ -308,6 +308,12 @@ const config = {
   width: 480,
   height: 800,
   parent: 'game-container',
+  scale: { // ✅ CORREGIDO
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    min: { width: 320, height: 480 },
+    max: { width: 720, height: 1280 }
+  },
   physics: { default: 'arcade', arcade: { gravity: { y: 350 }, debug: false } },
   scene: [PreloadScene, MainMenu, GameScene, GameOver]
 };
