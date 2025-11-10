@@ -1,39 +1,62 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Canasta Recolectora (Phaser.js)</title>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canasta Recolectora (Phaser.js)</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" rel="stylesheet">
 
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: radial-gradient(circle at top left, #4b0082 0%, #000000 80%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: 'Bangers', cursive;
-      overflow: hidden;
+  <style>
+    /* Corregido: Variable para la altura real de la ventana */
+    :root {
+      --vh: 1vh;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top left, #4b0082 0%, #000000 80%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%; /* Ajuste a 100% */
+      font-family: 'Bangers', cursive;
+      overflow: hidden;
+    }
+    
+    #game-container {
+        /* Usamos la variable corregida para el alto */
+        height: calc(var(--vh, 1vh) * 100); 
     }
-    canvas {
-      border: 4px solid #ff6a00;
-      box-shadow: 0 0 25px #ff00ff, 0 0 50px #ff6a00;
-      border-radius: 12px;
-    }
-  </style>
+
+    canvas {
+      width: 100% !important; 
+      height: 100% !important; 
+
+      border: 4px solid #ff6a00;
+      box-shadow: 0 0 25px #ff00ff, 0 0 50px #ff6a00;
+      border-radius: 12px;
+    }
+  </style>
 </head>
-
 <body>
-  <div id="game-container"></div>
+<div id="game-container"></div>
 
-  <script>
+<script>
+// CÓDIGO DE CORRECCIÓN PARA EL ALTO (vh) EN MÓVILES
+function setViewportHeight() {
+  let vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+setViewportHeight();
+window.addEventListener('resize', setViewportHeight);
+// FIN CÓDIGO DE CORRECCIÓN
+    
 let score = 0;
 let lives = 3;
-let scoreText, livesText, basket, basketballs, trash;
+let scoreText, livesText, basket, basketballs, trash; 
 let sfx;
 let bgm;
 
@@ -44,282 +67,288 @@ const MIN_DELAY_MS = 250;
 // ESCENA DE CARGA GLOBAL
 // ============================
 class PreloadScene extends Phaser.Scene {
-  constructor() { super({ key: 'PreloadScene' }); }
+  constructor() { super({ key: 'PreloadScene' }); }
 
-  preload() {
-    this.load.image('basket', 'canasta.png');
-    this.load.image('ball', 'pelota1.png');
-    this.load.image('ball_alt', 'pelota2.png');
-    this.load.image('trash', 'basura1.png');
-    this.load.image('trash_alt', 'basura2.png');
+  preload() {
+    this.load.image('basket', 'canasta.png');
+    this.load.image('ball', 'pelota1.png');
+    this.load.image('ball_alt', 'pelota2.png');
+    this.load.image('trash', 'basura1.png');
+    this.load.image('trash_alt', 'basura2.png');
 
-    this.load.audio('collect', 'collect.wav');
-    this.load.audio('hit', 'hit.wav');
-    this.load.audio('gameOver', 'gameover.wav');
-    this.load.audio('bgm', 'bgm.wav');
-  }
+    this.load.audio('collect', 'collect.wav'); 
+    this.load.audio('hit', 'hit.wav');         
+    this.load.audio('gameOver', 'gameover.wav'); 
+    this.load.audio('bgm', 'bgm.wav'); 
+  }
 
-  create() {
-    sfx = {
-      collect: this.sound.add('collect', { volume: 0.5 }),
-      hit: this.sound.add('hit', { volume: 0.6 }),
-      click: this.sound.add('click', { volume: 0.7 }),
-      gameOver: this.sound.add('gameOver', { volume: 0.7 })
-    };
+  create() {
+    sfx = {
+      collect: this.sound.add('collect', { volume: 0.5 }),
+      hit: this.sound.add('hit', { volume: 0.6 }),
+      gameOver: this.sound.add('gameOver', { volume: 0.7 })
+    };
 
-    bgm = this.sound.add('bgm', { loop: true, volume: 0.4 });
-    this.sound.unlock();
-    this.scene.start('MainMenu');
-  }
+    bgm = this.sound.add('bgm', { loop: true, volume: 0.4 });
+    
+    this.sound.unlock();
+
+    this.scene.start('MainMenu');
+  }
 }
 
 // ============================
 // MENÚ PRINCIPAL
 // ============================
 class MainMenu extends Phaser.Scene {
-  constructor() { super({ key: 'MainMenu' }); }
+  constructor() { super({ key: 'MainMenu' }); }
 
-  create() {
-    if (bgm && bgm.isPlaying) bgm.stop();
-    this.cameras.main.setBackgroundColor('#1a0033');
+  create() {
+    if (bgm && bgm.isPlaying) bgm.stop();
+    this.cameras.main.setBackgroundColor('#1a0033');
 
-    const overlay = this.add.graphics();
-    overlay.fillGradientStyle(0x4b0082, 0x000000, 0x4b0082, 0x000000, 1);
-    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+    const overlay = this.add.graphics();
+    overlay.fillGradientStyle(0x4b0082, 0x000000, 0x4b0082, 0x000000, 1);
+    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
 
-    const title = this.add.text(this.scale.width / 2, 200, 'CANASTA RECOLECTORA', {
-      fontSize: '60px',
-      fontFamily: 'Bangers',
-      fill: '#ffffff',
-      stroke: '#ff00ff',
-      strokeThickness: 8,
-      shadow: { color: '#ff00ff', blur: 25 }
-    }).setOrigin(0.5);
+    const title = this.add.text(this.scale.width / 2, 200, 'CANASTA RECOLECTORA', {
+      fontSize: '60px',
+      fontFamily: 'Bangers',
+      fill: '#ffffff',
+      stroke: '#ff00ff',
+      strokeThickness: 8,
+      shadow: { color: '#ff00ff', blur: 25 }
+    }).setOrigin(0.5);
 
-    this.add.text(this.scale.width / 2, 350, 'Atrapa pelotas y esquiva la basura', {
-      fontSize: '24px',
-      fill: '#ffa500',
-      fontFamily: 'Permanent Marker'
-    }).setOrigin(0.5);
+    this.add.text(this.scale.width / 2, 350, 'Atrapa pelotas y esquiva la basura', {
+      fontSize: '24px',
+      fill: '#ffa500',
+      fontFamily: 'Permanent Marker'
+    }).setOrigin(0.5);
 
-    const startButton = this.add.text(this.scale.width / 2, 520, 'JUGAR', {
-      fontSize: '48px',
-      fill: '#000000',
-      backgroundColor: '#ff6a00',
-      padding: { x: 30, y: 15 },
-      fontFamily: 'Bangers'
-    })
-    .setOrigin(0.5)
-    .setInteractive({ useHandCursor: true });
+    const startButton = this.add.text(this.scale.width / 2, 520, 'JUGAR', {
+      fontSize: '48px',
+      fill: '#000000',
+      backgroundColor: '#ff6a00',
+      padding: { x: 30, y: 15 },
+      fontFamily: 'Bangers'
+    })
+    .setOrigin(0.5)
+    .setInteractive({ useHandCursor: true });
 
-    startButton.on('pointerover', () => {
-      startButton.setStyle({ backgroundColor: '#ff00ff', fill: '#ffffff' });
-    });
-    startButton.on('pointerout', () => {
-      startButton.setStyle({ backgroundColor: '#ff6a00', fill: '#000000' });
-    });
+    startButton.on('pointerover', () => {
+      startButton.setStyle({ backgroundColor: '#ff00ff', fill: '#ffffff' });
+    });
+    startButton.on('pointerout', () => {
+      startButton.setStyle({ backgroundColor: '#ff6a00', fill: '#000000' });
+    });
 
-    startButton.on('pointerdown', () => {
-      sfx.click.play();
-      if (bgm && !bgm.isPlaying) bgm.play();
-      this.cameras.main.fadeOut(400, 0, 0, 0);
-      this.time.delayedCall(400, () => this.scene.start('GameScene'));
-    });
-  }
+    startButton.on('pointerdown', () => {
+      if (bgm && !bgm.isPlaying) {
+        bgm.play();
+      }
+
+      this.cameras.main.fadeOut(400, 0, 0, 0);
+      this.time.delayedCall(400, () => this.scene.start('GameScene'));
+    });
+  }
 }
 
 // ============================
 // ESCENA DE JUEGO
 // ============================
 class GameScene extends Phaser.Scene {
-  constructor() {
-    super({ key: 'GameScene' });
-    this.initialDelay = 1000;
-    this.nextObjectTime = 0;
-    this.difficultyLevel = 0;
-    this.isGameOver = false;
-  }
+  constructor() {
+    super({ key: 'GameScene' });
+    this.initialDelay = 1000;
+    this.nextObjectTime = 0;
+    this.difficultyLevel = 0;
+    this.isGameOver = false;
+  }
 
-  create() {
-    if (bgm && !bgm.isPlaying) bgm.play();
-    this.isGameOver = false;
-    score = 0;
-    lives = 3;
+  create() {
+    if (bgm && !bgm.isPlaying) {
+            bgm.play();
+        }
+    this.isGameOver = false;
+    score = 0;
+    lives = 3;
 
-    this.add.rectangle(0, 0, config.width, config.height, 0x0a192f).setOrigin(0);
-    this.physics.world.setBounds(0, 0, config.width, config.height);
+    this.add.rectangle(0, 0, config.width, config.height, 0x0a192f).setOrigin(0);
+    this.physics.world.setBounds(0, 0, config.width, config.height);
 
-    basket = this.physics.add.sprite(config.width / 2, config.height - 50, 'basket');
-    basket.displayWidth = 120;
-    basket.displayHeight = 40;
-    basket.body.setAllowGravity(false);
-    basket.body.setCollideWorldBounds(true);
-    basket.body.immovable = true;
+    basket = this.physics.add.sprite(config.width / 2, config.height - 50, 'basket');
+    basket.displayWidth = 120;
+    basket.displayHeight = 40;
+    basket.body.setAllowGravity(false);
+    basket.body.setCollideWorldBounds(true);
+    basket.body.immovable = true; 
 
-    basketballs = this.physics.add.group();
-    trash = this.physics.add.group();
+    basketballs = this.physics.add.group();
+    trash = this.physics.add.group();
 
-    this.input.on('pointermove', (pointer) => {
-      if (this.isGameOver) return;
-      basket.x = pointer.x;
-    });
+    this.input.on('pointermove', (pointer) => {
+      if (this.isGameOver) return;
+      basket.x = pointer.x; 
+    });
 
-    scoreText = this.add.text(16, 16, 'Puntuación: 0', { fontSize: '28px', fill: '#00ff00', fontFamily: 'Permanent Marker' });
-    livesText = this.add.text(config.width - 16, 16, 'Vidas: ' + lives, {
-      fontSize: '28px',
-      fill: '#ff6a00',
-      fontFamily: 'Permanent Marker'
-    }).setOrigin(1, 0);
+    scoreText = this.add.text(16, 16, 'Puntuación: 0', { fontSize: '28px', fill: '#00ff00', fontFamily: 'Permanent Marker' });
+    livesText = this.add.text(config.width - 16, 16, 'Vidas: ' + lives, {
+      fontSize: '28px',
+      fill: '#ff6a00',
+      fontFamily: 'Permanent Marker'
+    }).setOrigin(1, 0);
 
-    this.physics.add.overlap(basket, basketballs, this.collectBasketball, null, this);
-    this.physics.add.overlap(basket, trash, this.hitTrash, null, this);
-  }
+    this.physics.add.overlap(basket, basketballs, this.collectBasketball, null, this);
+    this.physics.add.overlap(basket, trash, this.hitTrash, null, this);
+  }
 
-  update(time) {
-    if (this.isGameOver) return;
-    if (time > this.nextObjectTime) {
-      this.addFallingObject();
-      this.difficultyLevel = Math.floor(time / 10000);
-      let delay = this.initialDelay - this.difficultyLevel * 75;
-      delay = Math.max(MIN_DELAY_MS, delay);
-      this.nextObjectTime = time + delay;
-    }
-    this.cleanUp(basketballs);
-    this.cleanUp(trash);
-  }
+  update(time) {
+    if (this.isGameOver) return;
 
-  cleanUp(group) {
-    group.getChildren().forEach(child => {
-      if (child.y > config.height + 50) {
-        if (child.name === 'basketball' && !this.isGameOver) {
-          score = Math.max(0, score - 1);
-          scoreText.setText('Puntuación: ' + score);
-        }
-        child.destroy();
-      }
-    });
-  }
+    
+    if (time > this.nextObjectTime) {
+      this.addFallingObject();
+      this.difficultyLevel = Math.floor(time / 10000);
+      let delay = this.initialDelay - this.difficultyLevel * 75;
+      delay = Math.max(MIN_DELAY_MS, delay);
+      this.nextObjectTime = time + delay;
+    }
 
-  addFallingObject() {
-    const x = Phaser.Math.Between(50, config.width - 50);
-    const isBasketball = Phaser.Math.RND.pick([true, false]);
-    let object;
+    this.cleanUp(basketballs);
+    this.cleanUp(trash);
+  }
 
-    if (isBasketball) {
-      object = this.physics.add.sprite(x, 0, Phaser.Math.RND.pick(['ball', 'ball_alt']));
-      basketballs.add(object);
-      object.name = 'basketball';
-    } else {
-      object = this.physics.add.sprite(x, 0, Phaser.Math.RND.pick(['trash', 'trash_alt']));
-      trash.add(object);
-      object.name = 'trash';
-    }
+  cleanUp(group) {
+    group.getChildren().forEach(child => {
+      if (child.y > config.height + 50) {
+        if (child.name === 'basketball' && !this.isGameOver) {
+          score = Math.max(0, score - 1);
+          scoreText.setText('Puntuación: ' + score);
+        }
+        child.destroy();
+      }
+    });
+  }
 
-    object.displayWidth = 50;
-    object.displayHeight = 50;
-    object.body.setVelocityY(Phaser.Math.Between(300, MAX_FALL_SPEED));
-  }
+  addFallingObject() {
+    const x = Phaser.Math.Between(50, config.width - 50);
+    const isBasketball = Phaser.Math.RND.pick([true, false]);
+    let object;
 
-  collectBasketball(player, basketball) {
-    basketball.destroy();
-    score++;
-    scoreText.setText('Puntuación: ' + score);
-    sfx.collect.play();
-  }
+    if (isBasketball) {
+      object = this.physics.add.sprite(x, 0, Phaser.Math.RND.pick(['ball', 'ball_alt']));
+      basketballs.add(object);
+      object.name = 'basketball';
+    } else {
+      object = this.physics.add.sprite(x, 0, Phaser.Math.RND.pick(['trash', 'trash_alt']));
+      trash.add(object);
+      object.name = 'trash';
+    }
 
-  hitTrash(player, trashObject) {
-    if (this.isGameOver) return;
-    trashObject.destroy();
-    lives--;
-    livesText.setText('Vidas: ' + lives);
-    sfx.hit.play();
-    if (lives <= 0) this.gameOver();
-  }
+    object.displayWidth = 50;
+    object.displayHeight = 50;
+    object.body.setVelocityY(Phaser.Math.Between(300, MAX_FALL_SPEED));
+  }
 
-  gameOver() {
-    this.isGameOver = true;
-    this.physics.pause();
-    if (bgm && bgm.isPlaying) bgm.stop();
-    sfx.gameOver.play();
-    this.cameras.main.fade(700, 0, 0, 0);
-    this.scene.launch('GameOver', { score });
-  }
+  collectBasketball(player, basketball) {
+    basketball.destroy();
+    score++;
+    scoreText.setText('Puntuación: ' + score);
+    sfx.collect.play();
+  }
+
+  hitTrash(player, trashObject) {
+    if (this.isGameOver) return;
+    trashObject.destroy();
+    lives--;
+    livesText.setText('Vidas: ' + lives);
+    sfx.hit.play();
+    if (lives <= 0) this.gameOver();
+  }
+
+  gameOver() {
+    this.isGameOver = true;
+    this.physics.pause();
+    if (bgm && bgm.isPlaying) bgm.stop();
+    sfx.gameOver.play();
+    this.cameras.main.fade(700, 0, 0, 0);
+    this.scene.launch('GameOver', { score });
+  }
 }
 
 // ============================
 // ESCENA DE GAME OVER
 // ============================
 class GameOver extends Phaser.Scene {
-  constructor() { super({ key: 'GameOver' }); }
+  constructor() { super({ key: 'GameOver' }); }
 
-  init(data) { this.finalScore = data.score; }
+  init(data) { this.finalScore = data.score; }
 
-  create() {
-    this.add.rectangle(0, 0, config.width, config.height, 0x0b0014).setOrigin(0);
+  create() {
+    this.add.rectangle(0, 0, config.width, config.height, 0x0b0014).setOrigin(0);
 
-    this.add.text(config.width / 2, 160, '¡FIN DEL JUEGO!', {
-      fontSize: '52px',
-      fill: '#ffffff',
-      stroke: '#ff0000',
-      strokeThickness: 6,
-      fontFamily: 'Bangers'
-    }).setOrigin(0.5);
+    this.add.text(config.width / 2, 160, '¡FIN DEL JUEGO!', {
+      fontSize: '52px',
+      fill: '#ffffff',
+      stroke: '#ff0000',
+      strokeThickness: 6,
+      fontFamily: 'Bangers'
+    }).setOrigin(0.5);
 
-    this.add.text(config.width / 2, 260, 'PUNTUACIÓN: ' + this.finalScore, {
-      fontSize: '28px',
-      fill: '#ff6a00',
-      fontFamily: 'Permanent Marker'
-    }).setOrigin(0.5);
+    this.add.text(config.width / 2, 260, 'PUNTUACIÓN: ' + this.finalScore, {
+      fontSize: '28px',
+      fill: '#ff6a00',
+      fontFamily: 'Permanent Marker'
+    }).setOrigin(0.5);
 
-    this.createButton(config.width / 2, 360, 'REINTENTAR', 0xff6a00, () => {
-      sfx.click.play();
-      this.scene.stop('GameOver');
-      this.scene.start('GameScene');
-    });
+    this.createButton(config.width / 2, 360, 'REINTENTAR', 0xff6a00, () => {
+      this.scene.stop('GameOver');
+      this.scene.start('GameScene');
+    });
 
-    this.createButton(config.width / 2, 440, 'MENÚ PRINCIPAL', 0xff00ff, () => {
-      sfx.click.play();
-      this.scene.stop('GameOver');
-      this.scene.stop('GameScene');
-      this.scene.start('MainMenu');
-    });
-  }
+    this.createButton(config.width / 2, 440, 'MENÚ PRINCIPAL', 0xff00ff, () => {
+      this.scene.stop('GameOver');
+      this.scene.stop('GameScene'); 
+      this.scene.start('MainMenu');
+    });
+  }
 
-  createButton(x, y, label, color, callback) {
-    const txt = this.add.text(x, y, label, {
-      fontSize: '30px',
-      fontFamily: 'Bangers',
-      fill: '#ffffff',
-      backgroundColor: '#00000055',
-      padding: { x: 20, y: 10 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+  createButton(x, y, label, color, callback) {
+    const txt = this.add.text(x, y, label, {
+      fontSize: '30px',
+      fontFamily: 'Bangers',
+      fill: '#ffffff',
+      backgroundColor: '#00000055',
+      padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    txt.on('pointerover', () => txt.setStyle({ backgroundColor: '#ff00ff55' }));
-    txt.on('pointerout', () => txt.setStyle({ backgroundColor: '#00000055' }));
-    txt.on('pointerdown', callback);
-  }
+    txt.on('pointerover', () => txt.setStyle({ backgroundColor: '#ff00ff55' }));
+    txt.on('pointerout', () => txt.setStyle({ backgroundColor: '#00000055' }));
+    txt.on('pointerdown', callback);
+  }
 }
 
 // ============================
-// CONFIGURACIÓN PHASER
+// CONFIGURACIÓN PHASER FINAL
 // ============================
 const config = {
-  type: Phaser.AUTO,
-  parent: 'game-container',
-  width: 480,
-  height: 800,
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
-  },
-  physics: {
-    default: 'arcade',
-    arcade: { gravity: { y: 350 }, debug: false }
-  },
-  scene: [PreloadScene, MainMenu, GameScene, GameOver]
+  type: Phaser.AUTO,
+  width: 480,
+  height: 800,
+  parent: 'game-container',
+  scale: {
+    // Usamos NONE para que el CSS maneje el escalado, eliminando el recorte.
+    mode: Phaser.Scale.NONE, 
+    width: 480,
+    height: 800
+  },
+  
+  physics: { default: 'arcade', arcade: { gravity: { y: 350 }, debug: false } },
+  scene: [PreloadScene, MainMenu, GameScene, GameOver]
 };
 
 new Phaser.Game(config);
-  </script>
+</script>
 </body>
 </html>
