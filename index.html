@@ -8,6 +8,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" rel="stylesheet">
 
   <style>
+    /* Corregido: Variable para la altura real de la ventana */
+    :root {
+      --vh: 1vh;
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -15,16 +20,20 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      height: 100%; /* Ajuste a 100% */
       font-family: 'Bangers', cursive;
       overflow: hidden;
     }
+    
+    #game-container {
+        /* Usamos la variable corregida para el alto */
+        height: calc(var(--vh, 1vh) * 100); 
+    }
 
     canvas {
-      /* CORRECCIÓN FINAL: Esto asegura que el canvas se ajusta al 100% del contenedor en móvil, sin recortar. */
       width: 100% !important; 
-      height: 100% !important;
-      
+      height: 100% !important; 
+
       border: 4px solid #ff6a00;
       box-shadow: 0 0 25px #ff00ff, 0 0 50px #ff6a00;
       border-radius: 12px;
@@ -35,6 +44,16 @@
 <div id="game-container"></div>
 
 <script>
+// CÓDIGO DE CORRECCIÓN PARA EL ALTO (vh) EN MÓVILES
+function setViewportHeight() {
+  let vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+setViewportHeight();
+window.addEventListener('resize', setViewportHeight);
+// FIN CÓDIGO DE CORRECCIÓN
+    
 let score = 0;
 let lives = 3;
 let scoreText, livesText, basket, basketballs, trash; 
@@ -57,8 +76,7 @@ class PreloadScene extends Phaser.Scene {
     this.load.image('trash', 'basura1.png');
     this.load.image('trash_alt', 'basura2.png');
 
-    // Extensiones corregidas a .wav
-   this.load.audio('collect', 'collect.wav'); 
+    this.load.audio('collect', 'collect.wav'); 
     this.load.audio('hit', 'hit.wav');         
     this.load.audio('gameOver', 'gameover.wav'); 
     this.load.audio('bgm', 'bgm.wav'); 
@@ -68,7 +86,6 @@ class PreloadScene extends Phaser.Scene {
     sfx = {
       collect: this.sound.add('collect', { volume: 0.5 }),
       hit: this.sound.add('hit', { volume: 0.6 }),
-      // sfx.click eliminado
       gameOver: this.sound.add('gameOver', { volume: 0.7 })
     };
 
@@ -127,8 +144,6 @@ class MainMenu extends Phaser.Scene {
     });
 
     startButton.on('pointerdown', () => {
-      // sfx.click.play() fue eliminado
-
       if (bgm && !bgm.isPlaying) {
         bgm.play();
       }
@@ -136,8 +151,6 @@ class MainMenu extends Phaser.Scene {
       this.cameras.main.fadeOut(400, 0, 0, 0);
       this.time.delayedCall(400, () => this.scene.start('GameScene'));
     });
-
-    // El botón SALIR fue eliminado
   }
 }
 
@@ -290,13 +303,11 @@ class GameOver extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.createButton(config.width / 2, 360, 'REINTENTAR', 0xff6a00, () => {
-      // sfx.click.play() fue eliminado
       this.scene.stop('GameOver');
       this.scene.start('GameScene');
     });
 
     this.createButton(config.width / 2, 440, 'MENÚ PRINCIPAL', 0xff00ff, () => {
-      // sfx.click.play() fue eliminado
       this.scene.stop('GameOver');
       this.scene.stop('GameScene'); 
       this.scene.start('MainMenu');
@@ -327,7 +338,7 @@ const config = {
   height: 800,
   parent: 'game-container',
   scale: {
-    // CORRECCIÓN FINAL: Usamos NONE para que el CSS maneje el escalado, eliminando el recorte.
+    // Usamos NONE para que el CSS maneje el escalado, eliminando el recorte.
     mode: Phaser.Scale.NONE, 
     width: 480,
     height: 800
