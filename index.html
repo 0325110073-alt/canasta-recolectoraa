@@ -322,16 +322,12 @@ const config = {
   width: 480,
   height: 800,
   parent: 'game-container',
-  pscale: {
-    mode: Phaser.Scale.FIT, 
-    autoCenter: Phaser.Scale.CENTER_BOTH, 
-    // min: { width: 320, height: 480 }, 
-    // max: { width: 768, height: 1024 } 
+  scale: { // Usamos 'scale' en lugar de 'pscale'
+    mode: Phaser.Scale.FIT, // Regresamos a FIT (o NONE si FIT falla)
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 480,
+    height: 800
   },
-  
-  physics: { default: 'arcade', arcade: { gravity: { y: 350 }, debug: false } },
-  scene: [PreloadScene, MainMenu, GameScene, GameOver]
-};
 
 new Phaser.Game(config);
 </script>
