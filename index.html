@@ -63,7 +63,6 @@ class PreloadScene extends Phaser.Scene {
     sfx = {
       collect: this.sound.add('collect', { volume: 0.5 }),
       hit: this.sound.add('hit', { volume: 0.6 }),
-      click: this.sound.add('click', { volume: 0.7 }),
       gameOver: this.sound.add('gameOver', { volume: 0.7 })
     };
 
@@ -348,8 +347,7 @@ const config = {
   pscale: {
     mode: Phaser.Scale.FIT, 
     autoCenter: Phaser.Scale.CENTER_BOTH, 
-    // min: { width: 320, height: 480 }, 
-    // max: { width: 768, height: 1024 } 
+
   },
   
   physics: { default: 'arcade', arcade: { gravity: { y: 350 }, debug: false } },
